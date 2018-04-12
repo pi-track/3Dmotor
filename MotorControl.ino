@@ -1,17 +1,18 @@
 /*
  * BLDC_congroller 1.0
+ * Arduino
  * by Patrick Eells
  *  based on instructable by David Glaser
  *  http://www.instructables.com/id/BLDC-Motor-Control-with-Arduino-salvaged-HD-motor/?ALLSTEPS
  *
  * Designed to work with the ST L6234 3-Phase Motor Driver IC
- * 
+ *
  * Runs a 3D printed 3phase motor counterclockwise
- * 
+ *
  * Motor speed is controlled by a single potentiometer
  * Motor position is determined with three Hall-Effect sensors
 
- * The Arduino receives outputs from 3 hall sensors (pins 2,3,4) 
+ * The Arduino receives outputs from 3 hall sensors (pins 2,3,4)
  * and converts their combination to 6 different commutation steps
  * PWM outputs on pins 9,10,11, at 32 kHz (corresponding to EN 1,2,3 respectively
  * 3 DO on pins 5,6,7 (IN 1,2,3)
@@ -19,9 +20,9 @@
  * 0-218: off
  * 219-1023: on
  * There are many lines commented out that were used for debugging by
- * printing various values to the serial connection. 
+ * printing various values to the serial connection.
  */
- 
+
 int HallState1; //Variables for the three hall sensors (3,2,1)
 int HallState2;
 int HallState3;
@@ -35,23 +36,23 @@ void setup() {
   pinMode(2,INPUT);    // Hall 1
   pinMode(3,INPUT);    // Hall 2
   pinMode(4,INPUT);    // Hall 3
-  
+
 // Outputs for the L6234 Motor Driver
-  pinMode(5,OUTPUT);   // IN 1 
+  pinMode(5,OUTPUT);   // IN 1
   pinMode(6,OUTPUT);   // IN 2
-  pinMode(7,OUTPUT);   // IN 3     
+  pinMode(7,OUTPUT);   // IN 3
   pinMode(9,OUTPUT);   // EN 1
-  pinMode(10,OUTPUT);  // EN 2 
+  pinMode(10,OUTPUT);  // EN 2
   pinMode(11,OUTPUT);  //  EN 3
-   
-   
+
+
   //Serial.begin(9600); //uncomment this line if you will use the serial connection
   // also uncomment Serial.flush command at end of program.
 
 /* Set PWM frequency on pins 9,10, and 11
-// this bit of code comes from 
+// this bit of code comes from
 http://usethearduino.blogspot.com/2008/11/changing-pwm-frequency-on-arduino.html
-*/  
+*/
   // Set PWM for pins 9,10 to 32 kHz
   //First clear all three prescaler bits:
   int prescalerVal = 0x07; //create a variable called prescalerVal and set it equal to the binary number "00000111"                                                       number "00000111"                                                      number "00000111"
@@ -60,24 +61,24 @@ http://usethearduino.blogspot.com/2008/11/changing-pwm-frequency-on-arduino.html
   //Now set the appropriate prescaler bits:
   int prescalerVal2 = 1; //set prescalerVal equal to binary number "00000001"
   TCCR1B |= prescalerVal2; //OR the value in TCCR0B with binary number "00000001"
-  
+
   // Set PWM for pins 3,11 to 32 kHz (Only pin 11 is used in this program)
   //First clear all three prescaler bits:
   TCCR2B &= ~prescalerVal; //AND the value in TCCR0B with binary number "11111000"
 
   //Now set the appropriate prescaler bits:
- 
+
   TCCR2B |= prescalerVal2; //OR the value in TCCR0B with binary number "00000001"//First clear all three prescaler bits:
-  
+
 }
 //MAIN LOOP OF THE PRGROM
 void loop(){
-  
+
    //time = millis();
   //prints time since program started
   //Serial.println(time);
   //Serial.print("\n");
-  
+
   throttle = analogRead(0); //value of the throttle potentiometer
   Speed = map(throttle, 128, 1023, 0, 255); //motoring on is mapped to the top half of potentiometer
   mOff = map(throttle, 0, 127, 0, 255); //motoring off is mapped to the bottom half of the pot
@@ -89,7 +90,7 @@ void loop(){
   //digitalWrite(8, HallState1);  // LEDs turned on when corresponding sensor is high - originally used for debugging
   //digitalWrite(9, HallState2);
   //digitalWrite(10, HallState3);
-   
+
   HallVal = (HallState1) + (2*HallState2) + (4*HallState3); //Computes the binary value of the 3 Hall sensors
 
   /*Serial.print("H 1: "); // used for debugging
@@ -100,13 +101,13 @@ void loop(){
   Serial.println(HallState3);
   Serial.println(" ");
   */
-  
-  //Serial.println(mSpeed);   
-  //Serial.println(HallVal);   
-  //Serial.print("\n");   
-  
-  // Monitor transistor outputs   
-  //delay(1000);   
+
+  //Serial.println(mSpeed);
+  //Serial.println(HallVal);
+  //Serial.print("\n");
+
+  // Monitor transistor outputs
+  //delay(1000);
   /*T1 = digitalRead(2);
   //T1 = ~T1;
   T2 = digitalRead(4);
@@ -138,14 +139,14 @@ void loop(){
 // that determine whether the upper or lower transistor of each phase is used
 // The outputs for the EN pins are controlled by the Arduino command analogWrite, which
 // sets the duty of the PWM (0 = OFF, 255 = ON or throttle value that is controlled by the potentiometer).
-/* for Counter clockwise motoring 
+/* for Counter clockwise motoring
   if (throttle > 511){
-      switch (HallVal) 
+      switch (HallVal)
        {
         case 3:
           //PORTD = B011xxx00;  // Desired Output for pins 0-7 xxx refers to the Hall inputs, which should not be changed
           PORTD  &= B00011111;
-          PORTD  |= B01100000;  // 
+          PORTD  |= B01100000;  //
 
           analogWrite(9,Speed); // PWM on Phase A (High side transistor)
           analogWrite(10,0);  // Phase B off (duty = 0)
@@ -153,8 +154,8 @@ void loop(){
           break;
         case 1:
           //PORTD = B001xxx00;  // Desired Output for pins 0-7
-          PORTD  &= B00011111;  // 
-          PORTD  |= B00100000;  // 
+          PORTD  &= B00011111;  //
+          PORTD  |= B00100000;  //
 
           analogWrite(9,Speed); // PWM on Phase A (High side transistor)
           analogWrite(10,255); //Phase B on (Low side transistor)
@@ -167,12 +168,12 @@ void loop(){
 
           analogWrite(9,0);
           analogWrite(10,255);
-          analogWrite(11,Speed); 
+          analogWrite(11,Speed);
           break;
-        case 4:  
+        case 4:
           //PORTD = B100xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD  |= B10000000;  // 
+          PORTD  |= B10000000;  //
 
           analogWrite(9,255);
           analogWrite(10,0);
@@ -181,7 +182,7 @@ void loop(){
         case 6:
         //PORTD = B110xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD = B11000000;  // 
+          PORTD = B11000000;  //
 
           analogWrite(9,255);
           analogWrite(10,Speed);
@@ -190,13 +191,13 @@ void loop(){
         case 2:
           //PORTD = B010xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD  |= B01000000;  // 
+          PORTD  |= B01000000;  //
 
           analogWrite(9,0);
           analogWrite(10,Speed);
           analogWrite(11,255);
           break;
-       }  
+       }
      }
  // commutation off for motoring off
    else{
@@ -207,9 +208,9 @@ void loop(){
             analogWrite(5,0);
             analogWrite(6,0);
             analogWrite(7,0);
-          }   
-          
-          
+          }
+
+
    //time = millis();
   //prints time since program started
   //Serial.println(time);
@@ -220,12 +221,12 @@ void loop(){
 
 // for counterClockwise motoring
 if (throttle > 128){
-      switch (HallVal) 
+      switch (HallVal)
        {
         case 4:
           //PORTD = B011xxx00;  // Desired Output for pins 0-7 xxx refers to the Hall inputs, which should not be changed
           PORTD  &= B00011111;
-          PORTD  |= B01100000;  // 
+          PORTD  |= B01100000;  //
 
           analogWrite(9,Speed); // PWM on Phase A (High side transistor)
           analogWrite(10,0);  // Phase B off (duty = 0)
@@ -233,8 +234,8 @@ if (throttle > 128){
           break;
         case 6:
           //PORTD = B001xxx00;  // Desired Output for pins 0-7
-          PORTD  &= B00011111;  // 
-          PORTD  |= B00100000;  // 
+          PORTD  &= B00011111;  //
+          PORTD  |= B00100000;  //
 
           analogWrite(9,Speed); // PWM on Phase A (High side transistor)
           analogWrite(10,255); //Phase B on (Low side transistor)
@@ -247,12 +248,12 @@ if (throttle > 128){
 
           analogWrite(9,0);
           analogWrite(10,255);
-          analogWrite(11,Speed); 
+          analogWrite(11,Speed);
           break;
-        case 3:  
+        case 3:
           //PORTD = B100xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD  |= B10000000;  // 
+          PORTD  |= B10000000;  //
 
           analogWrite(9,255);
           analogWrite(10,0);
@@ -261,7 +262,7 @@ if (throttle > 128){
         case 1:
         //PORTD = B110xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD = B11000000;  // 
+          PORTD = B11000000;  //
 
           analogWrite(9,255);
           analogWrite(10,Speed);
@@ -270,13 +271,13 @@ if (throttle > 128){
         case 5:
           //PORTD = B010xxx00;  // Desired Output for pins 0-7
           PORTD  &= B00011111;
-          PORTD  |= B01000000;  // 
+          PORTD  |= B01000000;  //
 
           analogWrite(9,0);
           analogWrite(10,Speed);
           analogWrite(11,255);
           break;
-       }  
+       }
      }
  // commutation off for motoring off
    else{
@@ -287,9 +288,9 @@ if (throttle > 128){
             analogWrite(5,0);
             analogWrite(6,0);
             analogWrite(7,0);
-          }   
-          
-          
+          }
+
+
    //time = millis();
   //prints time since program started
   //Serial.println(time);
